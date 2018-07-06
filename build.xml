@@ -1,0 +1,24 @@
+<project name="form4.typo3.t3x.form4_statusmonitor" basedir=".">
+
+	<import file="${buildproject.location}/build-include.xml" />
+
+	<!-- default targets -->
+
+	<target name="deploy-typo3ext-dev76" description="Deploy on extdev7-6-dev.form4.de">
+		<antcall target="deploy-typo3ext-scp-full">
+			<param name="buildtarget" value="dev76" />
+		</antcall>
+	</target>
+	
+	<target name="deploy-typo3ext-dev87" description="Deploy on extdev8-7-dev.form4.de">
+		<antcall target="deploy-typo3ext-scp-full">
+			<param name="buildtarget" value="dev87" />
+		</antcall>
+	</target>
+
+	<!-- auto deploy target -->
+	<target name="autodeploy-typo3ext" depends="init-autodeploy-typo3ext,init-typo3ext">
+		<antcall target="autodeploy-scp-typo3ext" />
+	</target>
+
+</project>
