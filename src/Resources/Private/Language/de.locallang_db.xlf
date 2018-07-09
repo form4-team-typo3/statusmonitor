@@ -21,6 +21,9 @@
             <trans-unit id="task.statusmonitor.statusmonitorPostUrl">
                 <target>URL (Bitte mit führenden https:// )</target>
             </trans-unit>
+            <trans-unit id="error.noUrl">
+                <target>Keine Url angegeben.</target>
+            </trans-unit>
 
 		</body>
 	</file>

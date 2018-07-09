@@ -36,4 +36,17 @@ class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask{
     	$statusmonitorUtility = $objectManager->get(\FORM4\Statusmonitor\Utility\StatusmonitorUtility::class);
     	$statusmonitorUtility->run($statusmonitorPassword,$statusmonitorUsername,$statusmonitorPostUrl);
     }
+    
+    public function setStatusmonitorUsername($username){
+        $this->statusmonitorPostUrl = $username;    
+    }
+    
+    public function setStatusmonitorPassword($password){
+        $this->statusmonitorPassword = $password;
+    }
+    
+    public function setStatusmonitorPostUrl($url){
+        $this->statusmonitorPostUrl = $url;
+    }
+    
 }
