@@ -2,6 +2,7 @@
 namespace FORM4\Statusmonitor\Task;
 
 use FORM4\Statusmonitor\Task\StatusmonitorTask;
+use TYPO3\CMS\Core\Messaging\FlashMessage;
 
 class StatusmonitorTaskAdditionalFieldProvider implements \TYPO3\CMS\Scheduler\AdditionalFieldProviderInterface
 {
@@ -37,43 +38,52 @@ class StatusmonitorTaskAdditionalFieldProvider implements \TYPO3\CMS\Scheduler\A
         
         $additionalFields['statusmonitorUsername'] = [
             'code' => '<input type="text" class="form-control" name="tx_scheduler[statusmonitorUsername]" value="' . $taskInfo['statusmonitorUsername'] . '">',
-            'label' => \TYPO3\CMS\Extbase\Utility\LocalizationUtility::translate('task.statusmonitor.statusmonitorUsername', 'form4_statusmonitor'),
-            'label' => 'Username',
+            'label' => $this->getLanguageService()->sL('LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:task.statusmonitor.statusmonitorUsername'),
             'cshKey' => '',
-            'cshLabel' => 'Username'
+            'cshLabel' => ''
         ];
 
         $additionalFields['statusmonitorPassword'] = [
             'code' => '<input type="password" class="form-control" name="tx_scheduler[statusmonitorPassword]" value="' . $taskInfo['statusmonitorPassword'] . '">',
-            'label' =>'Password',
+            'label' =>$this->getLanguageService()->sL('LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:task.statusmonitor.statusmonitorPassword'),
             'cshKey' => '',
-            'cshLabel' => 'Password'
+            'cshLabel' => ''
         ];
         
         $additionalFields['statusmonitorPostUrl'] = [
             'code' => '<input type="text" class="form-control" name="tx_scheduler[statusmonitorPostUrl]" value="' . $taskInfo['statusmonitorPostUrl'] . '">',
-            'label' => 'PostUrl (https://)',
+            'label' => $this->getLanguageService()->sL('LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:task.statusmonitor.statusmonitorPostUrl'),
             'cshKey' => '',
-            'cshLabel' => 'PostUrl (https://)'
+            'cshLabel' => ''
         ];
         
         return $additionalFields;
     }
-    
-    public function saveAdditionalFields(array $submittedData, \TYPO3\CMS\Scheduler\Task\AbstractTask $task) {
-        $task->setStatusmonitorUsername((string) $submittedData['statusmonitorUsername']);
-        $task->setStatusmonitorPassword((string) $submittedData['statusmonitorPassword']);
-        $task->setStatusmonitorPostUrl((string) $submittedData['statusmonitorPostUrl']);
-    }
-    
     public function validateAdditionalFields(array &$submittedData, \TYPO3\CMS\Scheduler\Controller\SchedulerModuleController $parentObject){
         $result = true;
         //no validation for username and password - they might be optional. 
-        if(isset($submittedData['statusmonitorPostUrl']) || empty($submittedData['statusmonitorPostUrl'])){
-//             throw new \Exception(\TYPO3\CMS\Extbase\Utility\LocalizationUtility::translate('error.noUrl', 'form4_statusmonitor'));
+        if(!isset($submittedData['statusmonitorPostUrl']) || empty($submittedData['statusmonitorPostUrl'])){
+            $parentObject->addMessage(
+                $this->getLanguageService()->sL('LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:error.noUrl'),
+                FlashMessage::ERROR
+            );
             $result = false;
         }
         return $result;
+    }
+    
+    public function saveAdditionalFields(array $submittedData, \TYPO3\CMS\Scheduler\Task\AbstractTask $task) {
+        $task->statusmonitorUsername = $submittedData['statusmonitorUsername'];
+        $task->statusmonitorPassword = $submittedData['statusmonitorPassword'];
+        $task->statusmonitorPostUrl = $submittedData['statusmonitorPostUrl'];
+    }
+    
+    /**
+     * @return \TYPO3\CMS\Lang\LanguageService
+     */
+    protected function getLanguageService()
+    {
+        return $GLOBALS['LANG'];
     }
     
 }

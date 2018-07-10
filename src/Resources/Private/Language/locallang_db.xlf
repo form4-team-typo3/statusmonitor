@@ -13,13 +13,19 @@
 				<source>This Task sends a json object which contains information about TYPO3 and components to a given url. This allows the monitoring of several aspects like installed Extensions and version information about TYPO3 itself. </source>
 			</trans-unit>
 			<trans-unit id="task.statusmonitor.statusmonitorUsername">
-				<source>Username</source>
+				<source>Username or id</source>
 			</trans-unit>
 			<trans-unit id="task.statusmonitor.statusmonitorPassword">
 				<source>Password</source>
 			</trans-unit>
 			<trans-unit id="task.statusmonitor.statusmonitorPostUrl">
 				<source>URL (with leading https:// )</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.passset">
+				<source>A Password is set.</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.passnotset">
+				<source>No Password was set.</source>
 			</trans-unit>
 			<trans-unit id="error.noUrl">
 				<source>No url defined.</source>
