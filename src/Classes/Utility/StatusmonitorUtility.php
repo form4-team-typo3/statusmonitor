@@ -4,16 +4,16 @@ namespace FORM4\Statusmonitor\Utility;
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extensionmanager\Utility\ListUtility;
 
-
 class StatusmonitorUtility
 {
+
     protected $postOptions = [
-        'https' =>[
+        'https' => [
             'method' => 'POST',
-            'header' => "Content-Type: application/json" . PHP_EOL . "Accept: application/json" .PHP_EOL
+            'header' => "Content-Type: application/json" . PHP_EOL . "Accept: application/json" . PHP_EOL
         ]
     ];
-    
+
     public function run($password, $username, $postUrl)
     {
         $result = false;
@@ -48,22 +48,23 @@ class StatusmonitorUtility
                     $jsonArray['modules'][] = [
                         'name' => $module['title'],
                         'version' => $module['version']
-                        
+                    
                     ];
                 }
             }
             
-            //MAYBE: signal/Slot to extend the jsonArray
+            // MAYBE: signal/Slot to extend the jsonArray
             
             $json = json_encode($jsonArray);
             
-            //sending to url
-            $result =  $this->sendWithCurl($json, $postUrl);
+            // sending to url
+            $result = $this->sendWithCurl($json, $postUrl);
         }
         return $result;
     }
-    
-    protected function sendWithCurl($jsonContent,$url){
+
+    protected function sendWithCurl($jsonContent, $url)
+    {
         $result = false;
         // Initiate cURL.
         $ch = curl_init();
@@ -73,26 +74,29 @@ class StatusmonitorUtility
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_POST => true,
             CURLOPT_POSTFIELDS => $jsonContent,
-            CURLOPT_HTTPHEADER, ['Content-Type: application/json']
-            
+            CURLOPT_HTTPHEADER,
+            [
+                'Content-Type: application/json'
+            ]
+        
         );
         // apply options
         curl_setopt_array($ch, $optArray);
         
-        //Execute the request
+        // Execute the request
         $curlresult = curl_exec($ch);
         $errors = curl_error($ch);
         $response = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
         
-        if($response == 200){
+        if ($response == 200) {
             $result = true;
-        }else{
+        } else {
             throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response);
         }
         return $result;
     }
-    
+
     /**
      * Get the SignalSlot dispatcher
      *
@@ -100,9 +104,9 @@ class StatusmonitorUtility
      */
     protected function getSignalSlotDispatcher()
     {
-        if (!isset($this->signalSlotDispatcher)) {
-            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)
-            ->get(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+        if (! isset($this->signalSlotDispatcher)) {
+            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)->get(
+                \TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
         }
         return $this->signalSlotDispatcher;
     }
