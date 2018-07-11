@@ -3,16 +3,27 @@ namespace FORM4\Statusmonitor\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extensionmanager\Utility\ListUtility;
+use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 class StatusmonitorUtility
 {
-
-    protected $postOptions = [
-        'https' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json" . PHP_EOL . "Accept: application/json" . PHP_EOL
-        ]
-    ];
+    
+    protected $jsonArray = [];
+    
+    public function getJsonArray(){
+        return $this->jsonArray;
+    }
+    
+    public function setJsonArray($jsonArray){
+        $this->jsonArray = $jsonArray;
+    }
+    
+    public function addToJsonArray($key,$value){
+        if( isset($key) & !empty($key) ){
+            $this->jsonArray[$key] = $value;
+        }
+    }
 
     public function run($password, $username, $postUrl)
     {
@@ -21,19 +32,19 @@ class StatusmonitorUtility
             
             // username
             if (isset($username) && ! empty($username)) {
-                $jsonArray['id'] = trim($username);
+                $this->addToJsonArray('id', trim($username));
             }
             
             // password
             if (isset($password) && ! empty($password)) {
-                $jsonArray['password'] = trim($password);
+                $this->addToJsonArray('password', trim($password));
             }
             
             // typo3 Version
-            $jsonArray['version'] = TYPO3_version;
+            $this->addToJsonArray('version', TYPO3_version);
             
-            // extensions
-            $jsonArray['modules'] = [];
+            // add extensions
+            $modulesToAdd = [];
             
             /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
             $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
@@ -41,11 +52,11 @@ class StatusmonitorUtility
             
             /** @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $objectManager->get(ListUtility::class);
-            $modules = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
+            $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
             
-            foreach ($modules as $module) {
+            foreach ($extensions as $module) {
                 if ($module['type'] == 'Local' && $module['installed'] == true) {
-                    $jsonArray['modules'][] = [
+                    $modulesToAdd[] = [
                         'name' => $module['title'],
                         'version' => $module['version']
                     
@@ -53,10 +64,10 @@ class StatusmonitorUtility
                 }
             }
             
-            // MAYBE: signal/Slot to extend the jsonArray
-            
-            $json = json_encode($jsonArray);
-            
+            $this->addToJsonArray('modules', $modulesToAdd);
+            //signal/Slot to extend the jsonArray
+            $this->getSignalSlotDispatcher()->dispatch( __CLASS__, 'AddToDataToArrayBeforeJsonEncode', [$this]);
+            $json = json_encode($this->getJsonArray());
             // sending to url
             $result = $this->sendWithCurl($json, $postUrl);
         }
@@ -104,9 +115,9 @@ class StatusmonitorUtility
      */
     protected function getSignalSlotDispatcher()
     {
-        if (! isset($this->signalSlotDispatcher)) {
-            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)->get(
-                \TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+        if (!isset($this->signalSlotDispatcher)) {
+            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)
+                ->get(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
         }
         return $this->signalSlotDispatcher;
     }

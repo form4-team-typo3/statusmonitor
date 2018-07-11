@@ -1,4 +1,9 @@
 <?php
+use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
+
+if (!defined('TYPO3_MODE')) {
+    die('Access denied.');
+}
 
 $lll = 'LLL:EXT:' . $_EXTKEY . '/Resources/Private/Language/locallang_db.xlf:';
 
