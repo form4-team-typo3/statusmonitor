@@ -64,5 +64,33 @@ There are 3 Methods in the parent object available which might be helpful to man
 	//... your changes
 	$pObj->setJsonArray($data);
 
+Changing the httpRequest Configuration
+======================================
+
+As the extension uses "HttpRequest" class of the TYPO3 core, you have the possibilty to override the given httpRequest Configuration.
+
+For that you can use the Signal/Slot 
+
+.. code-block:: php
+
+   $signalSlotDispatcher->connect(
+      \FORM4\Statusmonitor\Utility\StatusmonitorUtility::class,
+      'ChangeHttpRequestConfiguration',
+      \YourVendor\YourExtension\YourPath\YourClass::class,
+      'NameOfYOurMethod' 
+   );
+   
+   // if you want to change the httpRequestMethod from the default "POST" you can use e.G. from the parent object:
+   
+   $pObj->setHttpRequestMethod(\TYPO3\CMS\Core\Http\HttpRequest::METHOD_GET) 
+   // see HTTP_Request2 for allowed Methods
+   
+   // if you want to add your own config to the configuration array you have the following Methods in the parent object to set the configuration array:
+   
+   $pObj->getHttpRequestConfig();
+   $pObj->setHttpRequestConfig($httpRequestConfig);
+   $pObj->addToHttpRequestConfig($key, $value);
+   
+   //see \TYPO3\CMS\Core\Http\HttpRequest->setConfiguration() for allowed configuration keys/values
 
 

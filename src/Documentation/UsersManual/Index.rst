@@ -1,4 +1,4 @@
-﻿.. ==================================================
+.. ==================================================
 .. FOR YOUR INFORMATION
 .. --------------------------------------------------
 .. -*- coding: utf-8 -*- with BOM.
@@ -11,10 +11,11 @@
 Installation
 ============
 
-Install the extension via TER.
+Install the extension via TER. 
+ 
+In the extension configuration you add a username (optional), password (optional) and a target url (mandatory). 
 
-Then you can add the scheduler task "Status Monitor Task".
-In the configuration of the task you can add a username (optional), password (optional) and a target url (mandatory).
+Then you add the scheduler task "Status Monitor Task". 
 
 
 

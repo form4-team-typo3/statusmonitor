@@ -3,14 +3,51 @@ namespace FORM4\Statusmonitor\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extensionmanager\Utility\ListUtility;
-use TYPO3\CMS\Extbase\SignalSlot\Dispatcher;
-use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
+use TYPO3\CMS\Core\Http\HttpRequest;
 
 class StatusmonitorUtility
 {
 
     protected $jsonArray = [];
+    
+    protected $httpRequestConfig = [];
+    
+    protected $httpRequestMethod = HttpRequest::METHOD_POST;
+    
+    /*
+     * Helper methods if a signal/slot changes something
+     * the httpRequest Method (HttpRequest::METHOD_POST Or HttpRequest::METHOD_GET)
+     */
+    public function setHttpRequestMethod($httpRequestMethod)
+    {
+        $this->httpRequestMethod = $httpRequestMethod;
+    }
+    
+    /*
+     * Helper methods if a signal/slot changes the httpRequest Configuration
+     */
+    
+    public function getHttpRequestConfig()
+    {
+        return $this->httpRequestConfig;
+    }
 
+    public function setHttpRequestConfig($httpRequestConfig)
+    {
+        $this->httpRequestConfig = $httpRequestConfig;
+    }
+
+    public function addToHttpRequestConfig($key, $value)
+    {
+        if (isset($key) & ! empty($key)) {
+            $this->httpRequestConfig[$key] = $value;
+        }
+    }
+
+    /*
+     * Helper methods if a signal/slot changes the JSON Object Configuration
+     */
+    
     public function getJsonArray()
     {
         return $this->jsonArray;
@@ -28,19 +65,31 @@ class StatusmonitorUtility
         }
     }
 
-    public function run($password, $username, $postUrl)
+    
+    
+    //Main Method for the Scheduler Task
+    public function run()
     {
+        
         $result = false;
-        if (isset($postUrl) && ! empty($postUrl) && filter_var($postUrl, FILTER_VALIDATE_URL)) {
+        /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
+        $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+        
+        /** @var \TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility $configurationUtility */
+        $configurationUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility::class);
+        $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
+
+        if (isset($extConf['statusmonitor.postUrl']['value']) && ! empty($extConf['statusmonitor.postUrl']['value']) && filter_var($extConf['statusmonitor.postUrl']['value'], FILTER_VALIDATE_URL)) {
+            $postUrl = $extConf['statusmonitor.postUrl']['value'];
             
             // username
-            if (!empty($username)) {
-                $this->addToJsonArray('id', trim($username));
+            if (!empty($extConf['statusmonitor.user']['value'])) {
+                $this->addToJsonArray('id', trim($extConf['statusmonitor.user']['value']));
             }
             
             // password
-            if (!empty($password)) {
-                $this->addToJsonArray('password', trim($password));
+            if (!empty($extConf['statusmonitor.password']['value'])) {
+                $this->addToJsonArray('password', trim($extConf['statusmonitor.password']['value']));
             }
             
             // typo3 Version
@@ -49,19 +98,15 @@ class StatusmonitorUtility
             // add extensions
             $modulesToAdd = [];
             
-            /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
-            
             /** @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $objectManager->get(ListUtility::class);
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
-            
-            foreach ($extensions as $module) {
+
+            foreach ($extensions as $key => $module) {
                 if ($module['type'] == 'Local' && $module['installed'] == true) {
                     $modulesToAdd[] = [
-                        'name' => $module['title'],
+                        'name' => $key,
                         'version' => $module['version']
-                    
                     ];
                 }
             }
@@ -71,47 +116,40 @@ class StatusmonitorUtility
             $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'AddToDataToArrayBeforeJsonEncode', [
                 $this
             ]);
+
             $json = json_encode($this->getJsonArray());
+            
             // sending to url
-            $result = $this->sendWithCurl($json, $postUrl);
+            //set the httpRequest configurations 
+            $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeHttpRequestConfiguration', [
+                $this
+            ]);
+            
+            /** @var \TYPO3\CMS\Core\Http\HttpRequest $request */
+            $request = $objectManager->get(HttpRequest::class);
+            $request->setUrl($postUrl);
+            $request->setMethod($this->httpRequestMethod);
+            $request->setHeader('Content-Type','application/json');
+            
+            //additional Configuration will be merged with existing in httpRequest
+            $request->setConfiguration($this->httpRequestConfig);
+                        
+            $request->setBody($json);
+            
+            $result = $request->send();
+            
+            if ($result->getStatus() == 200) {
+                $result = true;
+            } else {
+                throw new \Exception('No Response with Code 200! The following response was delivered: ' . $result->getStatus() );
+            }
+            
         }
+        
         return $result;
+        
     }
-
-    protected function sendWithCurl($jsonContent, $url)
-    {
-        $result = false;
-        // Initiate cURL.
-        $ch = curl_init();
-        // define options
-        $optArray = array(
-            CURLOPT_URL => $url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST => true,
-            CURLOPT_POSTFIELDS => $jsonContent,
-            CURLOPT_HTTPHEADER,
-            [
-                'Content-Type: application/json'
-            ]
-        
-        );
-        // apply options
-        curl_setopt_array($ch, $optArray);
-        
-        // Execute the request
-        $curlresult = curl_exec($ch);
-        $errors = curl_error($ch);
-        $response = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
-        
-        if ($response == 200) {
-            $result = true;
-        } else {
-            throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response);
-        }
-        return $result;
-    }
-
+    
     /**
      * Get the SignalSlot dispatcher
      *
