@@ -26,13 +26,14 @@ class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask
      */
     public function getAdditionalInformation()
     {
-        $message = '';
-        $message .= 'User/Id :' . $this->statusmonitorUsername . PHP_EOL;
+        $message = 'User/Id: ' . $this->statusmonitorUsername . PHP_EOL;
         
         $lll = 'LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:';
         $passSetPhrase = $this->getLanguageService()->sL($lll . 'task.statusmonitor.passset');
         $passNotSetPhrase = $this->getLanguageService()->sL($lll . 'task.statusmonitor.passnotset');
-        $passInfo = isset($this->statusmonitorPassword) && ! empty($this->statusmonitorPassword) ? $passSetPhrase : $passNotSetPhrase;
+        $passInfo = isset($this->statusmonitorPassword) && ! empty($this->statusmonitorPassword) 
+            ? $passSetPhrase 
+            : $passNotSetPhrase;
         
         $message .= $passInfo . PHP_EOL;
         $message .= $this->statusmonitorPostUrl;
@@ -45,8 +46,11 @@ class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask
         $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
             \TYPO3\CMS\Extbase\Object\ObjectManager::class);
         $statusmonitorUtility = $objectManager->get(\FORM4\Statusmonitor\Utility\StatusmonitorUtility::class);
-        return $statusmonitorUtility->run($this->statusmonitorPassword, $this->statusmonitorUsername,
-            $this->statusmonitorPostUrl);
+        return $statusmonitorUtility->run(
+            $this->statusmonitorPassword, 
+            $this->statusmonitorUsername,
+            $this->statusmonitorPostUrl
+        );
     }
 
     /**

@@ -8,19 +8,22 @@ use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
 
 class StatusmonitorUtility
 {
-    
+
     protected $jsonArray = [];
-    
-    public function getJsonArray(){
+
+    public function getJsonArray()
+    {
         return $this->jsonArray;
     }
-    
-    public function setJsonArray($jsonArray){
+
+    public function setJsonArray($jsonArray)
+    {
         $this->jsonArray = $jsonArray;
     }
-    
-    public function addToJsonArray($key,$value){
-        if( isset($key) & !empty($key) ){
+
+    public function addToJsonArray($key, $value)
+    {
+        if (isset($key) & ! empty($key)) {
             $this->jsonArray[$key] = $value;
         }
     }
@@ -31,12 +34,12 @@ class StatusmonitorUtility
         if (isset($postUrl) && ! empty($postUrl) && filter_var($postUrl, FILTER_VALIDATE_URL)) {
             
             // username
-            if (isset($username) && ! empty($username)) {
+            if (!empty($username)) {
                 $this->addToJsonArray('id', trim($username));
             }
             
             // password
-            if (isset($password) && ! empty($password)) {
+            if (!empty($password)) {
                 $this->addToJsonArray('password', trim($password));
             }
             
@@ -47,8 +50,7 @@ class StatusmonitorUtility
             $modulesToAdd = [];
             
             /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
-                \TYPO3\CMS\Extbase\Object\ObjectManager::class);
+            $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
             
             /** @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $objectManager->get(ListUtility::class);
@@ -66,7 +68,9 @@ class StatusmonitorUtility
             
             $this->addToJsonArray('modules', $modulesToAdd);
             //signal/Slot to extend the jsonArray
-            $this->getSignalSlotDispatcher()->dispatch( __CLASS__, 'AddToDataToArrayBeforeJsonEncode', [$this]);
+            $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'AddToDataToArrayBeforeJsonEncode', [
+                $this
+            ]);
             $json = json_encode($this->getJsonArray());
             // sending to url
             $result = $this->sendWithCurl($json, $postUrl);
@@ -115,9 +119,8 @@ class StatusmonitorUtility
      */
     protected function getSignalSlotDispatcher()
     {
-        if (!isset($this->signalSlotDispatcher)) {
-            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)
-                ->get(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+        if (! isset($this->signalSlotDispatcher)) {
+            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)->get(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
         }
         return $this->signalSlotDispatcher;
     }
