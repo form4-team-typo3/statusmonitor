@@ -3,16 +3,19 @@ namespace FORM4\Statusmonitor\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extensionmanager\Utility\ListUtility;
-use TYPO3\CMS\Core\Http\HttpRequest;
 
 class StatusmonitorUtility
 {
 
     protected $jsonArray = [];
-    
+
+    //request 7.6
     protected $httpRequestConfig = [];
+    protected $httpRequestMethod = '';
     
-    protected $httpRequestMethod = HttpRequest::METHOD_POST;
+    //request 8.7 or higher
+    protected $requestFactoryOptions = [];
+    protected $requestFactoryMethod = 'POST';
     
     /*
      * Helper methods if a signal/slot changes something
@@ -45,6 +48,29 @@ class StatusmonitorUtility
     }
 
     /*
+     * Helper methods for version > 8.7 requestFactory
+     */
+
+    public function setRequestFactoryMethod($method)
+    {
+        $this->requestFactoryMethod = $method;
+    }
+    
+    public function setRequestFactoryOptions($options){
+        $this->requestFactoryOptions = $options;
+    }
+    
+    public function getRequestFactoryOptions(){
+        return $this->requestFactoryOptions;
+    }
+    
+    public function addToRequestFactoryOptions($key, $value){
+        if (isset($key) & ! empty($key)) {
+            $this->requestFactoryOptions[$key] = $value;
+        }
+    }
+
+    /*
      * Helper methods if a signal/slot changes the JSON Object Configuration
      */
     
@@ -65,8 +91,6 @@ class StatusmonitorUtility
         }
     }
 
-    
-    
     //Main Method for the Scheduler Task
     public function run()
     {
@@ -80,8 +104,10 @@ class StatusmonitorUtility
         $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
 
         if (isset($extConf['statusmonitor.postUrl']['value']) && ! empty($extConf['statusmonitor.postUrl']['value']) && filter_var($extConf['statusmonitor.postUrl']['value'], FILTER_VALIDATE_URL)) {
-            $postUrl = $extConf['statusmonitor.postUrl']['value'];
+            //set default Method
+            $this->httpRequestMethod = \TYPO3\CMS\Core\Http\HttpRequest::METHOD_POST;
             
+            $postUrl = $extConf['statusmonitor.postUrl']['value'];
             // username
             if (!empty($extConf['statusmonitor.user']['value'])) {
                 $this->addToJsonArray('id', trim($extConf['statusmonitor.user']['value']));
@@ -118,36 +144,68 @@ class StatusmonitorUtility
             ]);
 
             $json = json_encode($this->getJsonArray());
+
+            $typo3Version = explode('.', TYPO3_branch);
+          
             
-            // sending to url
-            //set the httpRequest configurations 
-            $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeHttpRequestConfiguration', [
-                $this
-            ]);
-            
-            /** @var \TYPO3\CMS\Core\Http\HttpRequest $request */
-            $request = $objectManager->get(HttpRequest::class);
-            $request->setUrl($postUrl);
-            $request->setMethod($this->httpRequestMethod);
-            $request->setHeader('Content-Type','application/json');
-            
-            //additional Configuration will be merged with existing in httpRequest
-            $request->setConfiguration($this->httpRequestConfig);
-                        
-            $request->setBody($json);
-            
-            $result = $request->send();
-            
-            if ($result->getStatus() == 200) {
-                $result = true;
-            } else {
-                throw new \Exception('No Response with Code 200! The following response was delivered: ' . $result->getStatus() );
+            if($typo3Version[0] ==  7 && $typo3Version[1] >=  6){
+                
+                // sending to url
+                //set the httpRequest configurations 
+                $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeHttpRequestConfiguration', [
+                    $this
+                ]);
+
+                /** @var \TYPO3\CMS\Core\Http\HttpRequest $request */
+                $request = $objectManager->get(\TYPO3\CMS\Core\Http\HttpRequest::class);
+                $request->setUrl($postUrl);
+                $request->setMethod($this->httpRequestMethod);
+                $request->setHeader('Content-Type','application/json');
+                
+                //additional Configuration will be merged with existing in httpRequest
+                $request->setConfiguration($this->httpRequestConfig);
+                $request->setBody($json);
+                
+                $response = $request->send();
+                if ($response->getStatus() == 200) {
+                    $result = true;
+                } else {
+                    throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response->getStatus() );
+                }
             }
             
+            if($typo3Version[0] >=  8){
+                
+                //Request Options
+                $this->addToRequestFactoryOptions(
+                    'headers',[
+                        'Content-Type' => 'application/json'
+                    ]
+                );
+                
+                $this->addToRequestFactoryOptions('body', $json); 
+                $this->addToRequestFactoryOptions('http_errors', false); 
+                
+                // sending to url
+                //set the requestFactory configurations 
+                $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeRequestFactoryOptions', [
+                    $this
+                ]);
+                
+                /** @var \TYPO3\CMS\Core\Http\RequestFactory $request */
+                $request = $objectManager->get(\TYPO3\CMS\Core\Http\RequestFactory::class);
+                
+                /** @var \GuzzleHttp\Psr7\Response $response */
+                $response = $request->request($postUrl, $this->requestFactoryMethod, $this->getRequestFactoryOptions());
+
+                if ($response->getStatusCode() == 200) {
+                    $result = true;
+                } else {
+                    throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response->getStatusCode());
+                }
+            }
         }
-        
         return $result;
-        
     }
     
     /**
@@ -162,4 +220,5 @@ class StatusmonitorUtility
         }
         return $this->signalSlotDispatcher;
     }
+    
 }

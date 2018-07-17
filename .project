@@ -3,6 +3,7 @@
 	<name>form4.typo3.t3x.form4_statusmonitor</name>
 	<comment></comment>
 	<projects>
+		<project>TYPO3_8-7</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>
