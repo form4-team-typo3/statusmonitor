@@ -3,126 +3,40 @@ namespace FORM4\Statusmonitor\Utility;
 
 use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extensionmanager\Utility\ListUtility;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
 
 class StatusmonitorUtility
 {
 
-    protected $jsonArray = [];
-
-    //request 7.6
-    protected $httpRequestConfig = [];
-    protected $httpRequestMethod = '';
-    
-    //request 8.7 or higher
-    protected $requestFactoryOptions = [];
-    protected $requestFactoryMethod = 'POST';
-    
-    /*
-     * Helper methods if a signal/slot changes something
-     * the httpRequest Method (HttpRequest::METHOD_POST Or HttpRequest::METHOD_GET)
-     */
-    public function setHttpRequestMethod($httpRequestMethod)
-    {
-        $this->httpRequestMethod = $httpRequestMethod;
-    }
-    
-    /*
-     * Helper methods if a signal/slot changes the httpRequest Configuration
-     */
-    
-    public function getHttpRequestConfig()
-    {
-        return $this->httpRequestConfig;
-    }
-
-    public function setHttpRequestConfig($httpRequestConfig)
-    {
-        $this->httpRequestConfig = $httpRequestConfig;
-    }
-
-    public function addToHttpRequestConfig($key, $value)
-    {
-        if (isset($key) & ! empty($key)) {
-            $this->httpRequestConfig[$key] = $value;
-        }
-    }
-
-    /*
-     * Helper methods for version > 8.7 requestFactory
-     */
-
-    public function setRequestFactoryMethod($method)
-    {
-        $this->requestFactoryMethod = $method;
-    }
-    
-    public function setRequestFactoryOptions($options){
-        $this->requestFactoryOptions = $options;
-    }
-    
-    public function getRequestFactoryOptions(){
-        return $this->requestFactoryOptions;
-    }
-    
-    public function addToRequestFactoryOptions($key, $value){
-        if (isset($key) & ! empty($key)) {
-            $this->requestFactoryOptions[$key] = $value;
-        }
-    }
-
-    /*
-     * Helper methods if a signal/slot changes the JSON Object Configuration
-     */
-    
-    public function getJsonArray()
-    {
-        return $this->jsonArray;
-    }
-
-    public function setJsonArray($jsonArray)
-    {
-        $this->jsonArray = $jsonArray;
-    }
-
-    public function addToJsonArray($key, $value)
-    {
-        if (isset($key) & ! empty($key)) {
-            $this->jsonArray[$key] = $value;
-        }
-    }
-
-    //Main Method for the Scheduler Task
+    // Main Method for the Scheduler Task
     public function run()
     {
-        
         $result = false;
         /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
-        $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class);
+        $objectManager = \TYPO3\CMS\Core\Utility\GeneralUtility::makeInstance(
+            \TYPO3\CMS\Extbase\Object\ObjectManager::class);
         
         /** @var \TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility $configurationUtility */
         $configurationUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility::class);
         $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
-
-        if (isset($extConf['postUrl']['value']) && ! empty($extConf['postUrl']['value']) && filter_var($extConf['postUrl']['value'], FILTER_VALIDATE_URL)) {
-            //set default Method
+        
+        if (isset($extConf['postUrl']['value']) && ! empty($extConf['postUrl']['value']) &&
+             filter_var($extConf['postUrl']['value'], FILTER_VALIDATE_URL)) {
             
-            if(class_exists(\TYPO3\CMS\Core\Http\HttpRequest::class)){
-                $this->httpRequestMethod = \TYPO3\CMS\Core\Http\HttpRequest::METHOD_POST;
-            }
+            $bodyArr = [];
             
             $postUrl = $extConf['postUrl']['value'];
+            
             // username
-            if (!empty($extConf['user']['value'])) {
-                $this->addToJsonArray('id', trim($extConf['user']['value']));
+            if (! empty($extConf['user']['value'])) {
+                $bodyArr['id'] = trim($extConf['user']['value']);
             }
             
-            // password
-            if (!empty($extConf['password']['value'])) {
-                $this->addToJsonArray('password', trim($extConf['password']['value']));
+            if (! empty($extConf['password']['value'])) {
+                $bodyArr['password'] = trim($extConf['password']['value']);
             }
             
-            // typo3 Version
-            $this->addToJsonArray('version', TYPO3_version);
+            $bodyArr['version'] = TYPO3_version;
             
             // add extensions
             $modulesToAdd = [];
@@ -130,7 +44,7 @@ class StatusmonitorUtility
             /** @var \TYPO3\CMS\Extensionmanager\Utility\ListUtility $listUtility */
             $listUtility = $objectManager->get(ListUtility::class);
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
-
+            
             foreach ($extensions as $key => $module) {
                 if ($module['type'] == 'Local' && $module['installed'] == true) {
                     $modulesToAdd[] = [
@@ -140,77 +54,79 @@ class StatusmonitorUtility
                 }
             }
             
-            $this->addToJsonArray('modules', $modulesToAdd);
-            //signal/Slot to extend the jsonArray
-            $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'AddToDataToArrayBeforeJsonEncode', [
-                $this
-            ]);
+            $bodyArr['modules'] = $modulesToAdd;
 
-            $json = json_encode($this->getJsonArray());
-
-            $typo3Version = explode('.', TYPO3_branch);
-          
-            
-            if($typo3Version[0] ==  7 && $typo3Version[1] >=  6){
-                
-                // sending to url
-                //set the httpRequest configurations 
-                $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeHttpRequestConfiguration', [
-                    $this
+            // signal/Slot to extend the bodyArr
+            list ($bodyArr) = $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ModifyDataArrayBeforeJsonEncode',
+                [
+                    $bodyArr
                 ]);
+            
+            $json = json_encode($bodyArr);
 
+            $typo3Version = VersionNumberUtility::convertVersionStringToArray(VersionNumberUtility::getCurrentTypo3Version());
+            
+            if ($typo3Version['version_main'] == 7 && $typo3Version['version_sub'] >= 6) {
+                
                 /** @var \TYPO3\CMS\Core\Http\HttpRequest $request */
                 $request = $objectManager->get(\TYPO3\CMS\Core\Http\HttpRequest::class);
                 $request->setUrl($postUrl);
-                $request->setMethod($this->httpRequestMethod);
-                $request->setHeader('Content-Type','application/json');
-                
-                //additional Configuration will be merged with existing in httpRequest
-                $request->setConfiguration($this->httpRequestConfig);
+                $request->setMethod(\TYPO3\CMS\Core\Http\HttpRequest::METHOD_POST);
+                $request->setHeader('Content-Type', 'application/json');
                 $request->setBody($json);
                 
+                list ($request) = $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ModifyHttpRequest',
+                    [
+                        $request
+                    ]);
+                
+                // sending to url
                 $response = $request->send();
                 if ($response->getStatus() == 200) {
                     $result = true;
                 } else {
-                    throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response->getStatus() );
+                    throw new \Exception(
+                        'No Response with Code 200! The following response was delivered: ' . $response->getStatus());
                 }
             }
             
-            if($typo3Version[0] >=  8){
+            if ($typo3Version['version_main'] >= 8) {
                 
-                //Request Options
-                $this->addToRequestFactoryOptions(
-                    'headers',[
-                        'Content-Type' => 'application/json'
+                /** @var \TYPO3\CMS\Core\Http\Request $request */
+                $request = $objectManager->get(\TYPO3\CMS\Core\Http\Request::class, $postUrl, 'POST');
+
+                // Request Options
+                $options = [
+                    'Content-Type' => 'application/json',
+                    'http_errors' => false,
+                    'body' => $json
+                ];
+                
+                list ($request, $options) = $this->getSignalSlotDispatcher()->dispatch(__CLASS__,
+                    'ModifyRequestAndOptions',
+                    [
+                        $request,
+                        $options
                     ]
                 );
                 
-                $this->addToRequestFactoryOptions('body', $json); 
-                $this->addToRequestFactoryOptions('http_errors', false); 
-                
                 // sending to url
-                //set the requestFactory configurations 
-                $this->getSignalSlotDispatcher()->dispatch(__CLASS__, 'ChangeRequestFactoryOptions', [
-                    $this
-                ]);
-                
-                /** @var \TYPO3\CMS\Core\Http\RequestFactory $request */
-                $request = $objectManager->get(\TYPO3\CMS\Core\Http\RequestFactory::class);
+                $client = $this->getClient();
                 
                 /** @var \GuzzleHttp\Psr7\Response $response */
-                $response = $request->request($postUrl, $this->requestFactoryMethod, $this->getRequestFactoryOptions());
-
+                $response = $client->send($request, $options);
+                
                 if ($response->getStatusCode() == 200) {
                     $result = true;
                 } else {
-                    throw new \Exception('No Response with Code 200! The following response was delivered: ' . $response->getStatusCode());
+                    throw new \Exception(
+                        'No Response with Code 200! The following response was delivered: ' . $response->getStatusCode());
                 }
             }
         }
         return $result;
     }
-    
+
     /**
      * Get the SignalSlot dispatcher
      *
@@ -219,9 +135,22 @@ class StatusmonitorUtility
     protected function getSignalSlotDispatcher()
     {
         if (! isset($this->signalSlotDispatcher)) {
-            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)->get(\TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
+            $this->signalSlotDispatcher = GeneralUtility::makeInstance(\TYPO3\CMS\Extbase\Object\ObjectManager::class)->get(
+                \TYPO3\CMS\Extbase\SignalSlot\Dispatcher::class);
         }
         return $this->signalSlotDispatcher;
     }
-    
+
+    /**
+     * Creates the client to do requests
+     * 
+     * @return \GuzzleHttp\ClientInterface
+     */
+    protected function getClient(): \GuzzleHttp\ClientInterface
+    {
+        $httpOptions = $GLOBALS['TYPO3_CONF_VARS']['HTTP'];
+        $httpOptions['verify'] = filter_var($httpOptions['verify'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $httpOptions['verify'];
+        
+        return GeneralUtility::makeInstance(\GuzzleHttp\Client::class, $httpOptions);
+    }
 }
