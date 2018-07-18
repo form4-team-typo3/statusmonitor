@@ -1,8 +1,6 @@
-statusmonitor{
-    # cat=basic/1; type=string; label=Username or id 
-    user =
-    # cat=basic/2; type=string; label=Password 
-    password =
-    # cat=basic/3; type=string; label=url with leading https (plus column signs and slashes)  
-    postUrl =
-}
+# cat=basic/1; type=string; label=Username or id 
+user =
+# cat=basic/2; type=string; label=Password 
+password =
+# cat=basic/3; type=string; label=url with leading https (plus column signs and slashes)  
+postUrl =

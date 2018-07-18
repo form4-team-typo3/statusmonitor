@@ -35,16 +35,16 @@ class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask
         $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
         $lll = 'LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:';
         
-        if(!empty($extConf['statusmonitor.user']['value'])){            
-            $message = 'User/Id: ' . $extConf['statusmonitor.user']['value'] . PHP_EOL;
+        if(!empty($extConf['user']['value'])){            
+            $message = 'User/Id: ' . $extConf['user']['value'] . PHP_EOL;
         }
 
-        $message .= isset($extConf['statusmonitor.password']['value']) && ! empty($extConf['statusmonitor.password']['value']) 
+        $message .= isset($extConf['password']['value']) && ! empty($extConf['password']['value']) 
             ? $this->getLanguageService()->sL($lll . 'task.statusmonitor.passset'). PHP_EOL
             : $this->getLanguageService()->sL($lll . 'task.statusmonitor.passnotset'). PHP_EOL
         ;
 
-        $message .= isset($extConf['statusmonitor.postUrl']['value']) && ! empty($extConf['statusmonitor.postUrl']['value']) 
+        $message .= isset($extConf['postUrl']['value']) && ! empty($extConf['postUrl']['value']) 
             ? $this->getLanguageService()->sL($lll . 'task.statusmonitor.urlset')
             : $this->getLanguageService()->sL($lll . 'task.statusmonitor.urlnotset')
         ;

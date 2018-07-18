@@ -103,19 +103,22 @@ class StatusmonitorUtility
         $configurationUtility = $objectManager->get(\TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility::class);
         $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
 
-        if (isset($extConf['statusmonitor.postUrl']['value']) && ! empty($extConf['statusmonitor.postUrl']['value']) && filter_var($extConf['statusmonitor.postUrl']['value'], FILTER_VALIDATE_URL)) {
+        if (isset($extConf['postUrl']['value']) && ! empty($extConf['postUrl']['value']) && filter_var($extConf['postUrl']['value'], FILTER_VALIDATE_URL)) {
             //set default Method
-            $this->httpRequestMethod = \TYPO3\CMS\Core\Http\HttpRequest::METHOD_POST;
             
-            $postUrl = $extConf['statusmonitor.postUrl']['value'];
+            if(class_exists(\TYPO3\CMS\Core\Http\HttpRequest::class)){
+                $this->httpRequestMethod = \TYPO3\CMS\Core\Http\HttpRequest::METHOD_POST;
+            }
+            
+            $postUrl = $extConf['postUrl']['value'];
             // username
-            if (!empty($extConf['statusmonitor.user']['value'])) {
-                $this->addToJsonArray('id', trim($extConf['statusmonitor.user']['value']));
+            if (!empty($extConf['user']['value'])) {
+                $this->addToJsonArray('id', trim($extConf['user']['value']));
             }
             
             // password
-            if (!empty($extConf['statusmonitor.password']['value'])) {
-                $this->addToJsonArray('password', trim($extConf['statusmonitor.password']['value']));
+            if (!empty($extConf['password']['value'])) {
+                $this->addToJsonArray('password', trim($extConf['password']['value']));
             }
             
             // typo3 Version
