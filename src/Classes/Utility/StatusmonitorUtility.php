@@ -71,7 +71,7 @@ class StatusmonitorUtility
             $extensions = $listUtility->getAvailableAndInstalledExtensionsWithAdditionalInformation();
             
             // Get extensions.
-            $bodyData['modules']= [];
+            $bodyData['modules'] = [];
             foreach ($extensions as $key => $module) {
                 if ($module['type'] == 'Local' && $module['installed'] == true) {
                     $bodyData['modules'][] = [
@@ -81,8 +81,8 @@ class StatusmonitorUtility
                 }
             }
 
-            // signal/Slot to extend the bodyArr
-            list ($bodyArr) = $this->getSignalSlotDispatcher()->dispatch(
+            // signal/Slot to extend the bodyData
+            list ($bodyData) = $this->getSignalSlotDispatcher()->dispatch(
                 __CLASS__,
                 'ModifyDataArrayBeforeJsonEncode',
                 [
