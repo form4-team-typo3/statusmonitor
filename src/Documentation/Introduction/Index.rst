@@ -1,4 +1,4 @@
-﻿.. ==================================================
+.. ==================================================
 .. FOR YOUR INFORMATION
 .. --------------------------------------------------
 .. -*- coding: utf-8 -*- with BOM.
@@ -9,13 +9,16 @@
 What does it do?
 ================
 
-This Extension send a Json Object Post to a given url, with Informations about the actual typo3 installation and components.
-This is quite useful if you are monitoring a great number of TYPO3 installations, and want to collect the data at a central place
-with the help of a rest api that can accept the data at a given url.
+This extension send a JSON Post to a given url, with informations about the actual typo3 installation and installed extensions.
 
-For that this extension provides a scheduler task that sends the data to a given rest url that accepts a json object via POST.
+With this, it allows you to monitor the informations which TYPO3 Version and which extensions are installed with their appropiate version.
 
-The extension contains a signal/slot to extend the given data.
+The idea behind this, is to keep track and provide a fast overview for possible necessary security updates in a central place.
+
+A simple to implement scheduler task allows it to transfer the data with the most minimal workload to a given rest url that accepts a json object via POST.
+
+To secure the transfered data, also a user and password can be configured. 
+ 
 
 
 
