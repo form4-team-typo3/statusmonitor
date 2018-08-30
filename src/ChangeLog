@@ -1,0 +1,2 @@
+2018-08-30  0.0.2  Thomas Grothaus, form4 GmbH & Co. KG <typo3@form4.de>
+    * bugfix removed return type, and Null coalescing operator from utility function to have no php dependency on php 7 - so that this extension can be used under php 5.6, too. 

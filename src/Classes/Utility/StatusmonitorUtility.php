@@ -177,11 +177,14 @@ class StatusmonitorUtility
      * 
      * @return \GuzzleHttp\ClientInterface
      */
-    protected function getClient(): \GuzzleHttp\ClientInterface
+    protected function getClient()
     {
         $httpOptions = $GLOBALS['TYPO3_CONF_VARS']['HTTP'];
-        $httpOptions['verify'] = filter_var($httpOptions['verify'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $httpOptions['verify'];
-        
+        if(filter_var($httpOptions['verify'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE)){
+            $httpOptions['verify'] = filter_var($httpOptions['verify'], FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+        }else{
+            $httpOptions['verify'];
+        }   
         return GeneralUtility::makeInstance(\GuzzleHttp\Client::class, $httpOptions);
     }
 }
