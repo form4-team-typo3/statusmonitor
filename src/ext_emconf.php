@@ -8,14 +8,14 @@ $EM_CONF[$_EXTKEY] = [
     'author_email' => 'typo3@form4.de',
     'state' => 'stable',
     'internal' => '',
-    'uploadfolder' => '0',
+    'uploadfolder' => '0', 
     'createDirs' => '',
     'clearCacheOnLoad' => 0,
-    'version' => '0.0.2',
+    'version' => '0.0.3-dev',
     'constraints' => [
         'depends' => [
-            'typo3' => '7.6.0-8.7.99', 
-            'php' => '5.5.9-7.2.99',
+            'typo3' => '7.6.0-9.5.99', 
+            'php' => '5.5.9-7.2.99', 
         ]
         ,
         'conflicts' => [

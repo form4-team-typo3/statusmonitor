@@ -23,12 +23,31 @@ use TYPO3\CMS\Core\Utility\GeneralUtility;
 use TYPO3\CMS\Extbase\Object\ObjectManager;
 use TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility;
 use FORM4\Statusmonitor\Utility\StatusmonitorUtility;
+use TYPO3\CMS\Core\Utility\VersionNumberUtility;
+use TYPO3\CMS\Extbase\Utility\DebuggerUtility;
+use TYPO3\CMS\Install\Service\LocalConfigurationValueService;
+use TYPO3\CMS\Core\Configuration\ExtensionConfiguration;
 
 /**
  * @author Thomas Grothaus <thomas.grothaus@form4.de>
  */
 class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask
 {
+    /**
+     * @var string
+     */
+    private $user;
+    
+    /**
+     * @var string
+     */
+    private $pass;
+    
+    /**
+     * @var string
+     */
+    private $posturl;
+    
     /**
      * @var string
      */
@@ -54,22 +73,37 @@ class StatusmonitorTask extends \TYPO3\CMS\Scheduler\Task\AbstractTask
         
         /** @var \TYPO3\CMS\Extbase\Object\ObjectManager $objectManager */
         $objectManager = GeneralUtility::makeInstance(ObjectManager::class);
-        
-        /** @var \TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility $configurationUtility */
-        $configurationUtility = $objectManager->get(ConfigurationUtility::class);
-        $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
+        $extConf;    
+        $versionArr = VersionNumberUtility::convertVersionStringToArray(VersionNumberUtility::getNumericTypo3Version());
+        if($versionArr['version_main']>8){
+            /**
+             * @var ExtensionConfiguration $extensionConfiguration
+             */
+            $extensionConfiguration = $objectManager->get(ExtensionConfiguration::class);
+            $extConf = $extensionConfiguration->get('form4_statusmonitor');
+            $this->pass = $extConf['password'];
+            $this->posturl = $extConf['postUrl'];
+            $this->user = $extConf['user'];
+        }else{
+            /** @var \TYPO3\CMS\Extensionmanager\Utility\ConfigurationUtility $configurationUtility */
+            $configurationUtility = $objectManager->get(ConfigurationUtility::class);
+            $extConf = $configurationUtility->getCurrentConfiguration('form4_statusmonitor');
+            $this->pass = $extConf['password']['value'];
+            $this->posturl = $extConf['postUrl']['value'];
+            $this->user = $extConf['user']['value'];
+        }
         
         $lll = 'LLL:EXT:form4_statusmonitor/Resources/Private/Language/locallang_db.xlf:';
         
-        if(!empty($extConf['user']['value'])){            
-            $message = 'User/Id: ' . $extConf['user']['value'] . PHP_EOL;
+        if(!empty($this->user)){            
+            $message = 'User/Id: ' . $this->user . PHP_EOL;
         }
 
-        $message .= isset($extConf['password']['value']) && ! empty($extConf['password']['value']) 
+        $message .= isset($this->pass) && ! empty($this->pass) 
             ? $this->getLanguageService()->sL($lll . 'task.statusmonitor.passset'). PHP_EOL
             : $this->getLanguageService()->sL($lll . 'task.statusmonitor.passnotset'). PHP_EOL;
 
-        $message .= isset($extConf['postUrl']['value']) && ! empty($extConf['postUrl']['value']) 
+        $message .= isset($this->posturl) && ! empty($this->posturl) 
             ? $this->getLanguageService()->sL($lll . 'task.statusmonitor.urlset')
             : $this->getLanguageService()->sL($lll . 'task.statusmonitor.urlnotset');
         
