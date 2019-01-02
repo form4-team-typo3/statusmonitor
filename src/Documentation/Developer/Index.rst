@@ -34,6 +34,31 @@ this a short overview of the structure of the JSON file that will be send.
 		},
 			//and so on
 		]
+      //this properties part was added with version 0.0.3 
+      //the following data is intended as an example for all given properties by default 
+      "properties": [
+         {
+            // if the phpversion() is enabled
+            "name": "php",
+            "value": "7.2"
+        },
+        {
+            "name": "OS",
+            "value": "Output depending on support of php_uname()"
+        },
+        {
+            "name": "SERVER API",
+            "value": "Output depending on support of php_sapi_name()"
+        },
+        {
+            "name": "SERVER",
+            "value": "Output depending on $_SERVER['SERVER_SOFTWARE']"
+        },
+        {
+            "name": "SQL Version",
+            "value": "Returns the version of the DB Connection via TYPO3 API"
+        }
+    ]
 	}
 
 
