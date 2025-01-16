@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="2016-02-09T17:38:21Z"  product-name="form4_responsive">
+		<header/>
+		<body>
+		
+			<!-- File References -->
+			
+			<trans-unit id="statusMonitorTask.name">
+				<source>Status Monitor Task</source>
+			</trans-unit>
+			<trans-unit id="statusMonitorTask.description">
+				<source>This Task sends a json object which contains information about TYPO3 and components to a given url. This allows the monitoring of several aspects like installed Extensions and version information about TYPO3 itself. </source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.statusmonitorUsername">
+				<source>Username or id</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.statusmonitorPassword">
+				<source>Password</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.statusmonitorPostUrl">
+				<source>URL (with leading https:// )</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.passset">
+				<source>A Password is set.</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.passnotset">
+				<source>No Password was set.</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.urlset">
+				<source>A url is set.</source>
+			</trans-unit>
+			<trans-unit id="task.statusmonitor.urlnotset">
+				<source>No url was set!</source>
+			</trans-unit>
+			<trans-unit id="error.noUrl">
+				<source>No url defined.</source>
+			</trans-unit>
+		
+		</body>
+	</file>
+</xliff>

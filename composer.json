@@ -1,0 +1,29 @@
+{
+    "name": "form4/form4-statusmonitor",
+    "type": "typo3-cms-extension",
+    "description": "This Extension send a JSON Object Post to a given url, with Informations about the actual typo3 installation and components.",
+    "minimum-stability": "stable",
+    "version": "12.0.0",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://composer.typo3.org"
+        }
+    ],
+    "require": {
+        "php": "^8.1 || ^8.2",
+        "typo3/cms-core": "11.5.* || 12.4.*"
+    },
+    "autoload": {
+        "classmap": [],
+        "psr-4": {
+            "FORM4\\Statusmonitor\\": "Classes"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "form4_statusmonitor"
+        }
+    }
+}
+

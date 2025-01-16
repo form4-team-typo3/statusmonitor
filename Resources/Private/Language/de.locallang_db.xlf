@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<xliff version="1.0">
+	<file source-language="en" datatype="plaintext" original="messages" date="###DATE_ISO8601###" product-name="form4_boilerplate">
+		<header/>
+		<body>
+		
+			<!-- File References -->
+			
+			<trans-unit id="statusMonitorTask.name">
+				<target>Status Monitor Task</target>
+			</trans-unit>
+			<trans-unit id="statusMonitorTask.description">
+				<target>Dieser Task versendet ein JSON Objekt an eine angegebene URL und ermöglicht so das Monitoring unterschiedliche Aspekte der installierten TYPO3 Instanz. </target>
+			</trans-unit>
+	         <trans-unit id="task.statusmonitor.statusmonitorUsername">
+                <target>Benutzername</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.statusmonitorPassword">
+                <target>Passwort</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.statusmonitorPostUrl">
+                <target>URL (Bitte mit führenden https:// )</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.passset">
+                <target>Passwort gesetzt.</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.passnotset">
+                <target>Kein Passwort gesetzt.</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.urlset">
+                <target>Url gesetzt.</target>
+            </trans-unit>
+            <trans-unit id="task.statusmonitor.urlnotset">
+                <target>Keine Url gesetzt!</target>
+            </trans-unit>
+            <trans-unit id="error.noUrl">
+                <target>Keine Url angegeben.</target>
+            </trans-unit>
+
+		</body>
+	</file>
+</xliff>
