@@ -3,7 +3,7 @@
     "type": "typo3-cms-extension",
     "description": "This Extension send a JSON Object Post to a given url, with Informations about the actual typo3 installation and components.",
     "minimum-stability": "stable",
-    "version": "13.0.0",
+    "version": "13.0.1",
     "repositories": [
         {
             "type": "composer",
