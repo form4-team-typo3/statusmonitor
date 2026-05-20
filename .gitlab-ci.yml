@@ -1,0 +1,143 @@
+stages:
+  - validate
+  - deploy
+
+variables:
+  GIT_STRATEGY: fetch
+  GIT_DEPTH: "0"           # Tags/History in GitLab brauchen wir zum Prüfen/Exportieren
+  GITHUB_BRANCH: "main"    # Ziel-Branch in GitHub (anpassen: main/master)
+  # Beispiel: git@github.com:ORG/REPO.git
+  # GITHUB_REPO_SSH muss als CI/CD Variable gesetzt sein
+  # GITHUB_REPO_SSH: "git@github.com:ORG/REPO.git"
+  # Muss als Variable gesetzt sein
+  # GITHUB_DEPLOY_KEY
+
+workflow:
+  rules:
+    # Pipeline läuft nur bei Tags
+    - if: '$CI_COMMIT_TAG'
+      when: always
+    - when: never
+
+validate-tag-on-branch:
+  stage: validate
+  image: alpine:3.20
+  before_script:
+    - apk add --no-cache git openssh-client
+  script:
+    - |
+      set -euo pipefail
+
+      if [ -z "${CI_COMMIT_TAG:-}" ]; then
+        echo "ERROR: Diese Pipeline ist nur für Tag-Pipelines gedacht (CI_COMMIT_TAG fehlt)."
+        exit 1
+      fi
+
+      echo "Fetching master zur Validierung…"
+      git fetch origin master --tags
+
+      echo "Prüfe: Tag-Commit muss auf master liegen…"
+      # CI_COMMIT_SHA ist der Commit, auf den das Tag zeigt
+      if ! git merge-base --is-ancestor "$CI_COMMIT_SHA" "origin/master"; then
+        echo "ERROR: Tag $CI_COMMIT_TAG zeigt NICHT auf einen Commit, der in origin/master enthalten ist."
+        echo "Abbruch, um falsche Releases zu verhindern."
+        exit 1
+      fi
+
+      echo "OK: Tag $CI_COMMIT_TAG liegt auf master."
+
+publish-composer-package:
+  image: curlimages/curl:latest
+  stage: deploy
+  rules:
+    - if: $CI_COMMIT_TAG
+  script:
+    - 'curl --header "Job-Token: $CI_JOB_TOKEN" --data tag=$CI_COMMIT_TAG "${CI_API_V4_URL}/projects/$CI_PROJECT_ID/packages/composer"'
+  environment: production
+
+publish-to-github:
+  stage: deploy
+  image: alpine:3.20
+  needs: ["validate-tag-on-branch"]
+  before_script:
+    - apk add --no-cache git openssh-client
+    - |
+      set -euo pipefail
+
+      if [ -z "${GITHUB_REPO_SSH:-}" ]; then
+        echo "ERROR: Variable GITHUB_REPO_SSH ist nicht gesetzt (z. B. git@github.com:ORG/REPO.git)."
+        exit 1
+      fi
+
+      echo "SSH Setup (Deploy Key)…"
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+
+      eval "$(ssh-agent -s)"
+
+      if [ -z "${GITHUB_DEPLOY_KEY:-}" ]; then
+        echo "ERROR: GITHUB_DEPLOY_KEY fehlt."
+        exit 1
+      fi
+
+      if [ -f "$GITHUB_DEPLOY_KEY" ]; then
+        # File-Variable: Pfad zeigt auf eine existierende Datei
+        install -m 600 "$GITHUB_DEPLOY_KEY" ~/.ssh/github_deploy_key
+      else
+        # Text-Variable: Inhalt in Datei schreiben
+        printf '%s' "$GITHUB_DEPLOY_KEY" | tr -d '\r' > ~/.ssh/github_deploy_key
+        chmod 600 ~/.ssh/github_deploy_key
+      fi
+
+      ssh-add ~/.ssh/github_deploy_key
+
+      # Known hosts pinnen (verhindert MITM; ohne interaktive Prompts)
+      ssh-keyscan -t rsa,ecdsa,ed25519 github.com >> ~/.ssh/known_hosts
+      chmod 644 ~/.ssh/known_hosts
+
+      # Optional: Host-spezifische Konfiguration (sauber & explizit)
+      cat > ~/.ssh/config <<'EOF'
+      Host github.com
+        IdentityFile ~/.ssh/github_deploy_key
+        IdentitiesOnly yes
+        StrictHostKeyChecking yes
+      EOF
+      chmod 600 ~/.ssh/config
+
+  script:
+    - |
+      set -euo pipefail
+
+      echo "Exportiere Snapshot des Tags $CI_COMMIT_TAG (Commit $CI_COMMIT_SHA)…"
+      rm -rf /tmp/export
+      mkdir -p /tmp/export
+
+      # WICHTIG: git archive liefert einen sauberen Tree ohne .git und ohne Build-Artefakte aus CI
+      git archive --format=tar "$CI_COMMIT_SHA" | tar -x -C /tmp/export
+
+      echo "Erzeuge Clean Repo ohne History…"
+      cd /tmp/export
+      git init
+      git checkout -b "$GITHUB_BRANCH"
+
+      # Setze eine klare Identität für CI-Commits
+      git config user.name  "form4 GmbH"
+      git config user.email "typo3@form4.de"
+
+      git add -A
+      git commit -m "Release ${CI_COMMIT_TAG}"
+
+      echo "Tag in Clean Repo setzen: $CI_COMMIT_TAG"
+      # Lightweight Tag reicht hier; wenn du annotated willst: git tag -a ...
+      git tag "$CI_COMMIT_TAG"
+
+      echo "Push nach GitHub: Branch=$GITHUB_BRANCH + Tag=$CI_COMMIT_TAG"
+      git remote add origin "$GITHUB_REPO_SSH"
+
+      # Überschreibt den Ziel-Branch absichtlich mit dem Snapshot (History-Reset)
+      git push --force origin "HEAD:refs/heads/${GITHUB_BRANCH}"
+
+      # Tag ebenfalls auf GitHub aktualisieren/setzen
+      git push --force origin "refs/tags/${CI_COMMIT_TAG}"
+
+      echo "DONE: GitHub Repo spiegelt den Stand von Tag $CI_COMMIT_TAG (aus GitLab master) wider."
