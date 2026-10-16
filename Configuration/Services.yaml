@@ -1,0 +1,18 @@
+services:
+  _defaults:
+    autowire: true
+    autoconfigure: true
+    public: false
+
+  FORM4\Statusmonitor\:
+    resource: '../Classes/*'
+    exclude:
+      - '../Classes/Domain/Model/*'
+      - '../Classes/Extending/*'
+
+  FORM4\Statusmonitor\Utility\StatusmonitorUtility:
+    arguments:
+      - $extensionConfiguration: '@TYPO3\CMS\Core\Configuration\ExtensionConfiguration'
+      - $listUtility: '@TYPO3\CMS\Extensionmanager\Utility\ListUtility'
+      - $requestFactory: '@TYPO3\CMS\Core\Http\RequestFactory'
+

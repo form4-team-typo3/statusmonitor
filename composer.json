@@ -1,0 +1,46 @@
+{
+    "name": "form4/form4-statusmonitor",
+    "type": "typo3-cms-extension",
+    "description": "Sends scheduled JSON POST requests to a configurable URL with TYPO3 core version, locally installed extensions, and optional server metadata—for centralized monitoring and inventory.",
+    "keywords": [
+        "typo3",
+        "typo3-cms-extension",
+        "monitoring",
+        "inventory",
+        "scheduler",
+        "json",
+        "backend"
+    ],
+    "homepage": "https://extensions.typo3.org/extension/form4_statusmonitor",
+    "minimum-stability": "stable",
+    "version": "14.0.1",
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "https://composer.typo3.org"
+        }
+    ],
+    "license": "GPL-2.0-or-later",
+    "authors": [
+        {
+            "name": "form4 GmbH",
+            "email": "typo3@form4.de"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "typo3/cms-core": "^14.3"
+    },
+    "autoload": {
+        "classmap": [],
+        "psr-4": {
+            "FORM4\\Statusmonitor\\": "Classes"
+        }
+    },
+    "extra": {
+        "typo3/cms": {
+            "extension-key": "form4_statusmonitor"
+        }
+    }
+}
+
